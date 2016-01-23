@@ -255,7 +255,7 @@ var Please = require('pleasejs');
 			if (line.exist && !point.__clicked) {
 				addPointToLine(e.point, e.point, point, group.id, initialPoint);
 				point.clicked = true;
-				// addClickedPoint(point);
+				addClickedPoint(point);
 				return;
 			}
 
@@ -263,7 +263,7 @@ var Please = require('pleasejs');
 				line.settings.strokeColor = group.__fillColor;
 				startLine(e.point, e.point, point, group.id, initialPoint);
 				point.__clicked = true;
-				// addClickedPoint(point);
+				addClickedPoint(point);
 				return;
 			}
 		}).on('mouseenter', function(e) {
