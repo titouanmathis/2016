@@ -7,10 +7,6 @@ var Please = require('pleasejs');
 (function() {
 	'use strict';
 
-	// Create aliases for events listeners
-	EventTarget.prototype.on = EventTarget.prototype.addEventListener;
-	EventTarget.prototype.off = EventTarget.prototype.removeEventListener;
-
 	// Create global variables
 	var cvs, ctx, viewWidth, viewHeight, txt, start, total, points, line, mouse, text, words, groups, colors, allPoints, clickedPoints, loader, isLoaded, originalPoint;
 	// Events booleans
@@ -18,7 +14,7 @@ var Please = require('pleasejs');
 	paper.install(window);
 
 
-	window.on('load', function() {
+	window.addEventListener('load', function() {
 
 		init();
 
@@ -155,7 +151,7 @@ var Please = require('pleasejs');
 		// 	addPoint(i);
 		// }
 
-		document.on('mousemove', function(e) {
+		document.addEventListener('mousemove', function(e) {
 			mouse.x = e.x;
 			mouse.y = e.y;
 		});
