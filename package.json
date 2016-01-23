@@ -1,0 +1,22 @@
+{
+  "name": "spirale",
+  "version": "1.0.0",
+  "description": "Terrain de jeu pour Three.js",
+  "private": true,
+  "main": "gulpfile.js",
+  "dependencies": {},
+  "devDependencies": {
+    "browser-sync": "^2.8.2",
+    "gulp": "^3.9.0",
+    "gulp-browserify": "^0.5.1",
+    "gulp-jscs": "^2.0.0",
+    "gulp-jscs-stylish": "^1.1.2",
+    "gulp-notify": "^2.2.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-uglify": "^1.4.2",
+    "pleasejs": "^0.4.2"
+  },
+  "author": "Titouan Mathis",
+  "license": "MIT",
+  "homepage": "git@github.com:titouanmathis/spirale.git"
+}
