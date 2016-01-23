@@ -1,7 +1,7 @@
 {
-  "name": "spirale",
+  "name": "2016",
   "version": "1.0.0",
-  "description": "Terrain de jeu pour Three.js",
+  "description": "Vœux 2016",
   "private": true,
   "main": "gulpfile.js",
   "dependencies": {},
@@ -18,5 +18,5 @@
   },
   "author": "Titouan Mathis",
   "license": "MIT",
-  "homepage": "git@github.com:titouanmathis/spirale.git"
+  "homepage": "git@github.com:titouanmathis/2016.git"
 }
