@@ -12,7 +12,7 @@ var Please = require('pleasejs');
 	EventTarget.prototype.off = EventTarget.prototype.removeEventListener;
 
 	// Create global variables
-	var cvs, ctx, viewWidth, viewHeight, txt, start, total, points, line, mouse, text, words, groups, colors, allPoints, clickedPoints;
+	var cvs, ctx, viewWidth, viewHeight, txt, start, total, points, line, mouse, text, words, groups, colors, allPoints, clickedPoints, loader, isLoaded, originalPoint;
 	// Events booleans
 	var mousedown, mousemove;
 	paper.install(window);
@@ -31,6 +31,7 @@ var Please = require('pleasejs');
 	 * @return {undefined}
 	 */
 	function init() {
+		isLoaded = false;
 		cvs = document.getElementById('canvas');
 		ctx = cvs.getContext('2d');
 		setSizes();
@@ -39,7 +40,14 @@ var Please = require('pleasejs');
 		mousedown = false;
 		points = new Group();
 
-		words = project.importSVG(document.querySelector('svg'));
+		var loaderSVG = document.getElementById('loader');
+		loader = project.importSVG(loaderSVG);
+		loaderSVG.remove();
+		loader.visible = true;
+		loader.position = view.center;
+		loader.scale(0.5);
+
+		words = project.importSVG(document.getElementById('svg'));
 
 		words.visible = true;
 		words.fitBounds(view.bounds);
@@ -57,8 +65,9 @@ var Please = require('pleasejs');
 
 		colors = shuffle(colors);
 
-		setup();
+		originalPoint = new Path.Circle(new Point(-100, -100), 6);
 
+		setup();
 
 		total = 0;
 		groups = [];
@@ -82,6 +91,19 @@ var Please = require('pleasejs');
 		setTimeout(function() {
 			var tl = new TimelineMax();
 			allPoints = shuffle(allPoints);
+			isLoaded = true;
+			tl.to(loader.scaling, 0.5, {
+				x: 0,
+				y: 0,
+				ease: Expo.easeOut,
+				onComplete: function() {
+					loader.remove();
+				}
+			});
+			tl.to(loader, 0.5, {
+				opacity: 0,
+				ease: Expo.easeOut
+			}, 0);
 			allPoints.forEach(function(point, k) {
 				// el.scaling.x = 1;
 				// el.scaling.y = 1;
@@ -133,34 +155,59 @@ var Please = require('pleasejs');
 
 		view.on('mousedown', function(e) {
 			mousedown = true;
+			mouse = e.point;
 		}).on('mouseup', function(e) {
 			mousedown = false;
 
 			var target = project.hitTest(e.point);
-			if (target !== null && target.item.parent.length && target.item.parent.parent.id !== line.currenGroup) {
-				if (line.exist)
-					deleteLine();
-			}
 			if ((target !== null && target.type !== 'fill') || target === null) {
 				if (line.exist)
 					deleteLine();
 			}
 		}).on('mousemove', function(e) {
-			mouse = e.point;
+			if (line.exist) {
+				mouse = e.point;
+			}
+		})
+		.on('frame', function(e) {
 
-
-		}).on('frame', function(e) {
+			if (e.count % 2) return;
 
 			if (line.exist) {
 				updateLine(mouse);
+				return;
+			}
+
+			if (!isLoaded) {
+				loader.rotation += 4;
+				loader.dashOffset += 4;
 			}
 		});
+
+		// function loop() {
+
+		// 	if (line.exist) {
+		// 		updateLine(mouse);
+		// 	}
+
+		// 	if (!isLoaded) {
+		// 		loader.rotation += 4;
+		// 		loader.dashOffset += 4;
+		// 	} else {
+		// 		return;
+		// 	}
+
+		// 	requestAnimationFrame(loop);
+		// }
+
+		// loop();
 	}
 
 
 	function addPoint(index, center, group, initialPoint) {
 		// var center = randomPoint();
-		var point = new Path.Circle(center, 6);
+		var point = originalPoint.clone();
+		point.position = center;
 
 		if (index > start) {
 			while(!testPoint(point)) {
@@ -213,7 +260,7 @@ var Please = require('pleasejs');
 			if (line.exist && !point.__clicked) {
 				addPointToLine(e.point, e.point, point, group.id, initialPoint);
 				point.clicked = true;
-				addClickedPoint(point);
+				// addClickedPoint(point);
 				return;
 			}
 
@@ -221,7 +268,7 @@ var Please = require('pleasejs');
 				line.settings.strokeColor = group.__fillColor;
 				startLine(e.point, e.point, point, group.id, initialPoint);
 				point.__clicked = true;
-				addClickedPoint(point);
+				// addClickedPoint(point);
 				return;
 			}
 		}).on('mouseenter', function(e) {
@@ -255,6 +302,7 @@ var Please = require('pleasejs');
 	}
 
 	function updatePoints() {
+		console.log('updatePoints');
 		points.children.forEach(function(el, i) {
 			el.remove();
 			addPoint(i);
@@ -262,12 +310,14 @@ var Please = require('pleasejs');
 	}
 
 	function testPoint(point) {
+		console.log('testPoint');
 		return groups.children.every(function(el, i) {
 			return !point.intersects(el);
 		});
 	}
 
 	function addClickedPoint(point) {
+		console.log('addClickedPoint');
 		if (clickedPoints.indexOf(point) < 0) clickedPoints.push(point);
 	}
 
@@ -344,12 +394,14 @@ var Please = require('pleasejs');
 		}
 
 		function removeNewLine(newLine) {
+			console.log('removeNewLine');
 			newLine.remove();
 		}
 
 
 		// Unclick all points
 		clickedPoints.forEach(function(point, i) {
+			console.log('removeClickedPoints');
 			point.__clicked = false;
 			clickedPoints.splice(i, 1);
 		});
@@ -383,18 +435,14 @@ var Please = require('pleasejs');
 	}
 
 	function updateLine(to) {
-
-
-			var currentLine = line.path;
-			line.settings.to.x = to.x;
-			line.settings.to.y = to.y;
-			// currentLine.lastSegment.point.x = to.x;
-			// currentLine.lastSegment.point.y = to.y;
-			TweenMax.to(currentLine.lastSegment.point, 1, {
-				x: to.x,
-				y: to.y,
-				ease: Elastic.easeOut
-			});
+		console.log('updateLine');
+		// line.path.lastSegment.point.x = to.x;
+		// line.path.lastSegment.point.y = to.y;
+		TweenMax.to(line.path.lastSegment.point, 1, {
+			x: to.x,
+			y: to.y,
+			ease: Elastic.easeOut
+		});
 	}
 
 	function endLine(from, to, target, initialPoint) {
