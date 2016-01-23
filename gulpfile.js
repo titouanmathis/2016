@@ -80,7 +80,18 @@ gulp.task('scripts', function() {
 gulp.task('uglify', function() {
 	gulp.src(assets +'js/app.js')
 		.pipe(browserify())
-		.pipe(uglify())
+		.pipe(uglify({
+			preserveComments: function(node, comment) {
+    		if (comment.value.substr(0,2) === '!!') {
+    			return true;
+    		} else {
+    			return false;
+    		}
+    	},
+    	compress: {
+    		drop_console: true
+    	}
+		}))
 		.pipe(gulp.dest('./dist/js'))
 });
 
