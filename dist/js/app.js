@@ -65,6 +65,8 @@ var Please = require('pleasejs');
 
 		colors = shuffle(colors);
 
+		mouse = new Point(0, 0);
+
 		originalPoint = new Path.Circle(new Point(-100, -100), 6);
 
 		setup();
@@ -153,6 +155,11 @@ var Please = require('pleasejs');
 		// 	addPoint(i);
 		// }
 
+		document.on('mousemove', function(e) {
+			mouse.x = e.x;
+			mouse.y = e.y;
+		});
+
 		view.on('mousedown', function(e) {
 			mousedown = true;
 			mouse = e.point;
@@ -163,10 +170,6 @@ var Please = require('pleasejs');
 			if ((target !== null && target.type !== 'fill') || target === null) {
 				if (line.exist)
 					deleteLine();
-			}
-		}).on('mousemove', function(e) {
-			if (line.exist) {
-				mouse = e.point;
 			}
 		})
 		.on('frame', function(e) {
