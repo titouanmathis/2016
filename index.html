@@ -9,12 +9,122 @@
 		html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 		canvas { display: block; width: 100%; height: 100%; }
 		#svg, #loader { display: none; }
+		.btn-container {
+			z-index: 1;
+			position: absolute;
+			left: 1em;
+			bottom: 1em;
+		}
+		button {
+			display: inline-block;
+			margin: 0;
+			padding: 0;
+			background: none;
+			border: 0;
+			cursor: pointer;
+		}
+
+		button:focus {
+			outline: none;
+		}
+
+		.btn {
+			position: relative;
+			width: 36px;
+			height: 36px;
+			margin-right: 10px;
+			padding: 6px;
+			opacity: 0;
+			-webkit-transform: scale(0) rotate(360deg);
+			-ms-transform: scale(0) rotate(360deg);
+			-o-transform: scale(0) rotate(360deg);
+			transform: scale(0) rotate(360deg);
+			-webkit-transition: all 0.4s cubic-bezier(0.190, 1.000, 0.220, 1.000);
+			-o-transition: all 0.4s cubic-bezier(0.190, 1.000, 0.220, 1.000);
+			transition: all 0.4s cubic-bezier(0.190, 1.000, 0.220, 1.000);
+		}
+
+		.is-loaded .btn {
+			opacity: 1;
+			-webkit-transform: scale(1) rotate(0);
+			-ms-transform: scale(1) rotate(0);
+			-o-transform: scale(1) rotate(0);
+			transform: scale(1) rotate(0);
+		}
+
+		.btn:hover:before {
+			-webkit-transform: scale(1.1);
+			-ms-transform: scale(1.1);
+			-o-transform: scale(1.1);
+			transform: scale(1.1);
+		}
+
+		.btn:active:before {
+			-webkit-transform: scale(0.95);
+			-ms-transform: scale(0.95);
+			-o-transform: scale(0.95);
+			transform: scale(0.95);
+		}
+
+		.btn:before {
+			content: "";
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 36px;
+			height: 36px;
+			border-radius: 18px;
+			background: rgb(0, 127, 255);
+			opacity: 0.3;
+			-webkit-transition: all 0.3s cubic-bezier(0.250,  2.000, 0.750, 1.000);
+			-o-transition: all 0.3s cubic-bezier(0.250,  2.000, 0.750, 1.000);
+			transition: all 0.3s cubic-bezier(0.250,  2.000, 0.750, 1.000);
+		}
+
+		.svg {
+			z-index: 1;
+			position: relative;
+			display: block;
+			width: 24px;
+			height: 24px;
+			fill: rgb(0, 127, 255);
+			-webkit-transform: scale(0.8);
+			-ms-transform: scale(0.8);
+			-o-transform: scale(0.8);
+			transform: scale(0.8);
+		}
+
+		#play {
+			display: none;
+		}
+
+		#play:active .svg {
+			-webkit-transform: scale(0.9);
+			-ms-transform: scale(0.9);
+			-o-transform: scale(0.9);
+			transform: scale(0.9);
+		}
+
+		#play .svg {
+			-webkit-transition: all 0.3s cubic-bezier(0.250, 2.000, 0.750, 1.000);
+			-o-transition: all 0.3s cubic-bezier(0.250, 2.000, 0.750, 1.000);
+			transition: all 0.3s cubic-bezier(0.250, 2.000, 0.750, 1.000);
+		}
 		</style>
 	</head>
 	<body>
 
+	<div class="btn-container">
+		<button class="btn" type="button" id="restart">
+			<svg class="svg" xmlns="http://www.w3.org/2000/svg" version="1.1" width="24" height="24" viewBox="0 0 24 24"><path d="M12 5q3.3 0 5.7 2.3t2.3 5.6q0 3.3-2.4 5.7t-5.6 2.3-5.6-2.3-2.4-5.7h2q0 2.5 1.8 4.2t4.2 1.8 4.2-1.8 1.8-4.2-1.8-4.2-4.2-1.8v4l-5-5 5-5v4z"/></svg>
+		</button>
+		<button class="btn" type="button" id="play">
+			<svg class="svg" xmlns="http://www.w3.org/2000/svg" version="1.1" width="24" height="24" viewBox="0 0 24 24"><path d="M8 5l11 7-11 7v-14z"/></svg>
+		</button>
+	</div>
+
 	<svg version="1.1" id="loader" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="58" height="58" viewBox="0 0 58 58" xml:space="preserve">
-		<circle fill="none" stroke="#0000FF" opacity="0.3" stroke-width="8" stroke-linecap="" stroke-dasharray="156" stroke-dashoffset="164" cx="29" cy="29" r="25"/>
+		<circle fill="none" stroke="rgb(0, 127, 255)" opacity="0.3" stroke-width="8" stroke-linecap="" stroke-dasharray="156" stroke-dashoffset="164" cx="29" cy="29" r="25"/>
 	  </path>
 	</svg>
 

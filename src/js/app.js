@@ -4,9 +4,11 @@ var Please = require('pleasejs');
 	'use strict';
 
 	// Create global variables
-	var cvs, ctx, viewWidth, viewHeight, txt, start, total, points, line, mouse, text, words, groups, colors, allPoints, clickedPoints, loader, isLoaded, originalPoint;
+	var cvs, ctx, viewWidth, viewHeight, txt, start, total, points, line, mouse, text, words, groups, colors, allPoints, clickedPoints, loader, isLoaded, originalPoint, lines;
 	// Events booleans
 	var mousedown, mousemove;
+	var tic, swif, fiws;
+	var restart, play, isPlaying;
 	paper.install(window);
 
 
@@ -46,6 +48,21 @@ var Please = require('pleasejs');
 		words.scale(0.9);
 		words.position = view.center;
 
+		tic = document.createElement('audio');
+		tic.pause();
+		tic.volume = 0.6;
+		tic.src = '/src/mp3/tic3.mp3';
+
+		swif = document.createElement('audio');
+		swif.pause();
+		swif.volume = 0.5;
+		swif.src = '/src/mp3/swif.mp3';
+
+		fiws = document.createElement('audio');
+		fiws.pause();
+		fiws.volume = 0.5;
+		fiws.src = '/src/mp3/fiws.mp3';
+
 		colors = Please.make_scheme({
 			h: 0,
 			s: 1,
@@ -55,11 +72,21 @@ var Please = require('pleasejs');
 			format: 'rgb-string'
 		});
 
+		console.log(colors);
+
 		colors = shuffle(colors);
 
 		mouse = new Point(0, 0);
 
+		restart = document.getElementById('restart');
+		play = document.getElementById('play');
+
+		restart.addEventListener('click', reset);
+		play.addEventListener('click', playAll);
+
 		originalPoint = new Path.Circle(new Point(-100, -100), 6);
+
+		lines = [];
 
 		setup();
 
@@ -86,6 +113,7 @@ var Please = require('pleasejs');
 			var tl = new TimelineMax();
 			allPoints = shuffle(allPoints);
 			isLoaded = true;
+			document.body.classList.add('is-loaded');
 			tl.to(loader.scaling, 0.5, {
 				x: 0,
 				y: 0,
@@ -126,7 +154,7 @@ var Please = require('pleasejs');
 			},
 			origin: new Point(0, 0),
 			exist: false,
-			paths: []
+			path: new Path.Line()
 		};
 
 		text = {
@@ -168,7 +196,7 @@ var Please = require('pleasejs');
 
 			if (e.count % 2) return;
 
-			if (line.exist) {
+			if (line.exist && !isPlaying) {
 				updateLine(mouse);
 				return;
 			}
@@ -217,6 +245,7 @@ var Please = require('pleasejs');
 		point.opacity = 0.3;
 		point.__index = index;
 		point.__clicked = false;
+		point.__initialPoint = initialPoint;
 
 		// checkPosition(point);
 
@@ -231,14 +260,15 @@ var Please = require('pleasejs');
 
 		point.on('click', function(e) {
 
-			// if (line.exist && point.__index === 1 && line.origin.__index === group.children.length) {
-			// 	endLine(e.point, e.point, point);
-			// 	return;
-			// }
+			console.log(point.__clicked)
 
-			if (point.parent.parent.__isComplete) return;
+			if (point === line.origin || point.parent.parent.__isComplete) return;
+			console.log('click')
+			var everyPointsClicked = group.children.every(function(el, i) {
+				return clickedPoints.indexOf(el.children[0]) > -1;
+			});
 
-			if (line.exist && point.__clicked) {
+			if (line.exist && everyPointsClicked) {
 				endLine(e.point, e.point, point, initialPoint);
 				line.path.blendMode = 'overlay';
 				// line.path.fillColor = group.__fillColor;
@@ -254,7 +284,7 @@ var Please = require('pleasejs');
 
 			if (line.exist && !point.__clicked) {
 				addPointToLine(e.point, e.point, point, group.id, initialPoint);
-				point.clicked = true;
+				point.__clicked = true;
 				addClickedPoint(point);
 				return;
 			}
@@ -267,16 +297,19 @@ var Please = require('pleasejs');
 				return;
 			}
 		}).on('mouseenter', function(e) {
+			// swif.play();
 			point.__hover = true;
 			if (point.parent.parent.__isComplete) return;
 			TweenMax.to(point.scaling, 0.3, { x: 1.5, y: 1.5, ease: Back.easeOut });
 			document.body.style.cursor = 'pointer';
 		}).on('mouseleave', function(e) {
+			// fiws.play();
 			point.__hover = false;
 			TweenMax.to(point.scaling, 0.3, { x: 1, y: 1, ease: Back.easeOut });
 			document.body.removeAttribute('style');
 		}).on('mousedown', function(e) {
 			if (point.parent.parent.__isComplete) return;
+			tic.play();
 			TweenMax.to(point.scaling, 0.3, { x: 1.7, y: 1.7, ease: Expo.easeOut });
 		}).on('mouseup', function(e) {
 			if (point.__hover && !point.parent.parent.__isComplete)
@@ -312,8 +345,9 @@ var Please = require('pleasejs');
 	}
 
 	function addClickedPoint(point) {
-		console.log('addClickedPoint');
+		console.log('addClickedPoint', point.__index);
 		if (clickedPoints.indexOf(point) < 0) clickedPoints.push(point);
+		console.log(clickedPoints);
 	}
 
 
@@ -329,6 +363,7 @@ var Please = require('pleasejs');
 		line.exist = true;
 		line.origin = target;
 		line.currenGroup = currenGroup;
+		lines.push(line.path);
 		TweenMax.to(line.path.firstSegment.point, 1, {
 			x: target.position.x,
 			y: target.position.y,
@@ -350,31 +385,36 @@ var Please = require('pleasejs');
 		});
 	}
 
-	function deleteLine() {
+	function deleteLine(l) {
 		console.log('deleteLine');
 		line.exist = false;
 
+		for (var j = 0; j < clickedPoints.length; j++) {
+			console.log(clickedPoints[j].__index, clickedPoints[j].__clicked);
+			clickedPoints[j].__clicked = false;
+			console.log(clickedPoints[j].__index, clickedPoints[j].__clicked);
+		}
+
+		l = typeof l === 'undefined' ? line.path : l;
+
+		clickedPoints = [];
 
 		var tl = new TimelineMax();
-
-		var m = 0;
-		var totalLength = line.path.segments.length - 1;
+		var totalLength = l.segments.length - 1;
 		for (var i = totalLength; i > 0; i--) {
-			var segment = line.path.segments[i];
-			var prevSegment = line.path.segments[i-1];
+			var segment = l.segments[i];
+			var prevSegment = l.segments[i-1];
 			var newLine = new Path.Line(prevSegment.point, segment.point);
 			segment.remove();
-			newLine.strokeColor = line.path.strokeColor;
-			newLine.strokeWidth = line.path.strokeWidth;
-			newLine.opacity = line.path.opacity;
+			newLine.strokeColor = l.strokeColor;
+			newLine.strokeWidth = l.strokeWidth;
+			newLine.opacity = l.opacity;
 
 			var duration = i === totalLength ? 0.2 : 0.1;
 			duration = i === 1 ? 0.8 : duration;
 			// var delay = i === 1 ? '-=' + duration * 0.55 : '-=0';
 			var ease = i === totalLength ? Expo.easeIn : Linear.easeNone;
 			ease = i === 1 ? Elastic.easeOut : ease;
-
-			console.log(ease);
 
 			tl.to(newLine.lastSegment.point, duration, {
 				x: prevSegment.point.x,
@@ -383,50 +423,12 @@ var Please = require('pleasejs');
 				onComplete: removeNewLine,
 				onCompleteParams: [newLine]
 			});
-
-			m++;
-
 		}
 
 		function removeNewLine(newLine) {
 			console.log('removeNewLine');
 			newLine.remove();
 		}
-
-
-		// Unclick all points
-		clickedPoints.forEach(function(point, i) {
-			console.log('removeClickedPoints');
-			point.__clicked = false;
-			clickedPoints.splice(i, 1);
-		});
-
-		// var lastSegment = line.path.lastSegment;
-		// var beforeLastSegment = line.path.segments[line.path.segments.length-2];
-		// var newLine = new Path.Line(beforeLastSegment.point, lastSegment.point);
-		// lastSegment.remove();
-		// newLine.strokeColor = line.path.strokeColor;
-		// newLine.strokeWidth = line.path.strokeWidth;
-		// newLine.opacity = line.path.opacity;
-
-		// var duration = 0.8;
-
-		// TweenMax.to(newLine, duration/3, {
-		// 	delay: duration*2/3,
-		// 	strokeWidth: 0,
-		// 	ease: Expo.easeOut
-		// });
-		// TweenMax.to(newLine.lastSegment.point, duration, {
-		// 	x: beforeLastSegment.point.x,
-		// 	y: beforeLastSegment.point.y,
-		// 	ease: Elastic.easeOut,
-		// 	onComplete: function() {
-		// 		newLine.remove();
-		// 	}
-		// });
-		// view.on('frame', function() {
-
-		// });
 	}
 
 	function updateLine(to) {
@@ -466,6 +468,82 @@ var Please = require('pleasejs');
 				x: el.__handleOut.x,
 				y: el.__handleOut.y,
 				ease: Elastic.easeOut
+			});
+		});
+	}
+
+
+
+	function reset() {
+		console.log('reset');
+
+		var tl = new TimelineMax();
+
+		lines.forEach(function(l, j) {
+
+			l.segments.forEach(function(el, i) {
+
+				tl.to(el.handleIn, 1, {
+					delay: i/20,
+					x: 0,
+					y: 0,
+					ease: Elastic.easeOut
+				}, j/10);
+				tl.to(el.handleOut, 1, {
+					delay: i/20,
+					x: 0,
+					y: 0,
+					ease: Elastic.easeOut
+				}, j/10);
+			});
+
+			tl.to(l, 1, {
+				strokeWidth: 2,
+				opacity: 1,
+				ease: Expo.easeOut,
+				onComplete: function() {
+					deleteLine(l);
+				}
+			}, j/10);
+		});
+
+		TweenMax.to(restart.children, 2, {
+			rotation: '-=360',
+			ease: Expo.easeOut
+		});
+
+
+		allPoints.forEach(function(el, i) {
+			console.log('is complete ?', el.parent.__isComplete);
+			el.parent.__isComplete = false;
+		});
+	}
+
+	function playAll() {
+		console.log('playAll');
+		isPlaying = true;
+		var tl = new TimelineMax();
+
+		groups.forEach(function(word, i) {
+			word.children.forEach(function(letter, j) {
+				letter.children.forEach(function(item, k) {
+
+					var p = item.children[0];
+
+					if (k === 0)
+						tl.call(function() {
+							startLine(p.position, p.position, p, letter.id, p.__initialPoint);
+						});
+					else {
+						// tl.to(line.path)
+						updateLine(p.position);
+					}
+
+					if (k === letter.children.length) {
+						updateLine(letter.children[0].children[0].position);
+						endLine(null, null, letter.children[0].children[0], letter.children[0].children[0].__initialPoint);
+					}
+				});
 			});
 		});
 	}
