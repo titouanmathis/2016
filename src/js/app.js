@@ -477,24 +477,28 @@ var Please = require('pleasejs');
 	function reset() {
 		console.log('reset');
 
-		var tl = new TimelineMax();
+		var tl = new TimelineMax({
+			onComplete: function() {
+				lines = [];
+			}
+		});
 
 		lines.forEach(function(l, j) {
 
 			l.segments.forEach(function(el, i) {
 
 				tl.to(el.handleIn, 1, {
-					delay: i/20,
+					// delay: i/20,
 					x: 0,
 					y: 0,
 					ease: Elastic.easeOut
-				}, j/10);
+				}, j/2);
 				tl.to(el.handleOut, 1, {
-					delay: i/20,
+					// delay: i/20,
 					x: 0,
 					y: 0,
 					ease: Elastic.easeOut
-				}, j/10);
+				}, j/2);
 			});
 
 			tl.to(l, 1, {
@@ -504,7 +508,7 @@ var Please = require('pleasejs');
 				onComplete: function() {
 					deleteLine(l);
 				}
-			}, j/10);
+			}, j/2);
 		});
 
 		TweenMax.to(restart.children, 2, {
@@ -514,7 +518,6 @@ var Please = require('pleasejs');
 
 
 		allPoints.forEach(function(el, i) {
-			console.log('is complete ?', el.parent.__isComplete);
 			el.parent.__isComplete = false;
 		});
 	}
@@ -522,30 +525,142 @@ var Please = require('pleasejs');
 	function playAll() {
 		console.log('playAll');
 		isPlaying = true;
-		var tl = new TimelineMax();
+		var tl = new TimelineMax({
+			paused: true,
+			onComplete: function() {
+				isPlaying = false;
+			}
+		});
+
+		lines.forEach(function(l, i) {
+			l.remove();
+		});
+
+		lines = [];
+
+		allPoints.forEach(function(el, i) {
+			el.parent.__isComplete = true;
+		});
 
 		groups.forEach(function(word, i) {
 			word.children.forEach(function(letter, j) {
+				letter.__path = new Path();
+				letter.__path.strokeColor = letter.__fillColor;
+				letter.__path.strokeWidth = 2;
+				// letter.__path.add(new Point(letter.children[0].children[0].position.x, letter.children[0].children[0].position.y));
+				letter.__path.closed = false;
+				lines.push(letter.__path);
 				letter.children.forEach(function(item, k) {
 
 					var p = item.children[0];
 
-					if (k === 0)
-						tl.call(function() {
-							startLine(p.position, p.position, p, letter.id, p.__initialPoint);
-						});
-					else {
-						// tl.to(line.path)
-						updateLine(p.position);
+					if (k === 0) {
+						var newPoint = letter.__path.add(p.position);
+						newPoint.__handleIn = p.__initialPoint.handleIn;
+						newPoint.__handleOut = p.__initialPoint.handleOut;
+						tl.to(newPoint.handleIn, 1, {
+							x: newPoint.__handleIn.x,
+							y: newPoint.__handleIn.y,
+							ease: Elastic.easeOut
+						}, (i+j+k)/30);
+						tl.to(newPoint.handleOut, 1, {
+							x: newPoint.__handleOut.x,
+							y: newPoint.__handleOut.y,
+							ease: Elastic.easeOut
+						}, (i+j+k)/30);
 					}
 
-					if (k === letter.children.length) {
-						updateLine(letter.children[0].children[0].position);
-						endLine(null, null, letter.children[0].children[0], letter.children[0].children[0].__initialPoint);
+					if (k > 0) {
+						var newPoint = letter.__path.add(p.position);
+						newPoint.__handleIn = p.__initialPoint.handleIn;
+						newPoint.__handleOut = p.__initialPoint.handleOut;
+
+						tl.to(newPoint.handleIn, 1, {
+							x: newPoint.__handleIn.x,
+							y: newPoint.__handleIn.y,
+							ease: Elastic.easeOut
+						}, (i+j+k)/30);
+						tl.to(newPoint.handleOut, 1, {
+							x: newPoint.__handleOut.x,
+							y: newPoint.__handleOut.y,
+							ease: Elastic.easeOut
+						}, (i+j+k)/30);
+						// var lastSegment = letter.__path.lastSegment;
+						// tl.fromTo(lastSegment.point, 1, {
+						// 	x: letter.children[k-1].children[0].position.x,
+						// 	y: letter.children[k-1].children[0].position.y,
+						// }, {
+						// 	x: p.position.x,
+						// 	y: p.position.y,
+						// 	ease: Linear.easeNone,
+						// 	onComplete: function() {
+						// 		if (k === letter.children.length-1) {
+						// 			letter.__path.add(new Poin(p.position.x, p.position.y));
+						// 			tl.to(letter.__path.lastSegment.point, 1, {
+						// 				x: letter.children[0].children[0].position.x,
+						// 				y: letter.children[0].children[0].position.y,
+						// 				ease: Expo.easeOut
+						// 			});
+						// 		}
+						// 	}
+						// });
+						// tl.call(function() {
+							// var lastSegment = letter.__path.lastSegment;
+							// letter.__path.add(new Point(letter.__path.lastSegment.point.x, letter.__path.lastSegment.point.y));
+
+							// tl.to(letter.__path.lastSegment.point, 0.1, {
+							// 	x: p.position.x,
+							// 	y: p.position.y,
+							// 	ease: Linear.easeNone,
+							// });
+						// });
+					}
+
+
+					if (k === letter.children.length-1) {
+						// letter.__path.lineTo(letter.children[0].children[0].position);
+						letter.__path.closed = true;
+						tl.to(letter.__path, 0.3, {
+							opacity: 0.5,
+							strokeWidth: 6,
+							ease: Back.easeOut
+						}, ((i+j+k)/30));
+						// var newPoint = letter.__path.add(letter.children[0].children[0].position);
+						// newPoint.__handleIn = p.__initialPoint.handleIn;
+						// newPoint.__handleOut = p.__initialPoint.handleOut;
+						// console.log(newPoint.handl);
+
+						// tl.to(newPoint.handleIn, 1, {
+						// 	x: newPoint.__handleIn.x,
+						// 	y: newPoint.__handleIn.y,
+						// 	ease: Elastic.easeOut
+						// }, (i+j+k)/30);
+						// tl.to(newPoint.handleOut, 1, {
+						// 	x: newPoint.__handleOut.x,
+						// 	y: newPoint.__handleOut.y,
+						// 	ease: Elastic.easeOut
+						// }, (i+j+k)/30);
+						// tl.call(function() {
+						// 	letter.__path.add(new Point(letter.__path.lastSegment.point.x, letter.__path.lastSegment.point.y));
+						// 	letter.__path.closed = false;
+						// 	tl.to(letter.__path.lastSegment.point, 0.3, {
+						// 		x: letter.children[0].children[0].position.x,
+						// 		y: letter.children[0].children[0].position.y,
+						// 		ease: Expo.easeOut
+						// 	});
+						// });
 					}
 				});
 			});
 		});
+
+		tl.play();
+
+		// allPoints.forEach(function(group, i) {
+		// 	if (group[0].__index === 1) {
+
+		// 	}
+		// });
 	}
 
 
