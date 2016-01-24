@@ -251,7 +251,7 @@ var Please = require('pleasejs');
 
 		text.settings.content = index;
 		text.settings.point = center;
-		text.settings.fontSize = '10px';
+		text.settings.fontSize = 10;
 		text.settings.justification = 'center';
 		text.settings.fillColor = group.__fillColor;
 		var label = new PointText(text.settings);
